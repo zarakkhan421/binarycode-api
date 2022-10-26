@@ -23,7 +23,7 @@ from decouple import config
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields='__all__'
+        fields=['name','posts']
         # exclude =['views']
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
