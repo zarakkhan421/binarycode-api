@@ -1,58 +1,93 @@
+from email import message
+from math import perm
 from rest_framework import permissions
 from common.models import User
 
 
-
-# class IsSuperAdmin(permissions.BasePermission):
-#     def has_object_permission(self, request, view, obj):
-#         return request.user.is_admin
-
-# class IsOwner(permissions.BasePermission):
-#     def has_object_permission(self, request, view, obj):
-#         return request.user.uid == obj.user_id
-    
-# class IsAdmin(permissions.BasePermission):
-#     def has_object_permission(self, request, view, obj):
-#         return request.user.role == 'admin'
-   
-# class IsEditor(permissions.BasePermission):
-#     def has_object_permission(self, request, view, obj):
-#         return request.user.role == 'editor'
-
-# class IsWriter(permissions.BasePermission):
-#     def has_object_permission(self, request, view, obj):
-#         return request.user.role == 'writer'
-
-# class IsPOST(permissions.BasePermission):
-#     def has_object_permission(self, request, view, obj):
-#         return request.method =='POST'
-# class IsGET(permissions.BasePermission):
-#     def has_object_permission(self, request, view, obj):
-#         return request.method =='GET'
-# class IsUPDATE(permissions.BasePermission):
-#     def has_object_permission(self, request, view, obj):
-#         return request.method =='PATCH' or request.method == 'PUT'
-# class IsDELETE(permissions.BasePermission):
-#     def has_object_permission(self, request, view, obj):
-#         return request.method =='DELETE'
-    
-    
-class DetailPermissons(permissions.BasePermission):
+class POSTPermissions(permissions.BasePermission):
+    def has_permission(self, request, view):
+        role = request.user.role
+        method =request.method
+        print('non obj', method,role)
+        if(method == "GET"):
+            return True
+        if(method in ["POST"] and role in ["admin",'editor','writer']):
+            return True
+        
+        return False
+class ObjectPermissions(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        if(request.user.role=='admin'):
+        role = request.user.role
+        method =request.method
+        owner= obj.user_id.uid == request.user.uid
+        print('obj',method,role, owner)
+        
+        if(method == "GET"):
             return True
-        # owner
-        if(request.user.uid == obj.user_id):
+        if(owner):
             return True
-        # not loggedin
-        if(request.user.is_anonymous and request.method == 'GET'):
+
+        if(method in ["PUT",'PATCH','DELETE'] and role in ['admin']):
             return True
-        # editor can do everything except delete. if is owner will do everything as per above conditions
-        if(request.user.role == "editor" and request.method not in ['DELETE']):
+        
+        if(method in ["PUT",'PATCH'] and role in ['editor']):
             return True
         
         return False
     
-class ListPermissions(permissions.BasePermission):
+
+class POSTCategoryPermissions(permissions.BasePermission):
+    def has_permission(self, request, view):
+        role = request.user.role
+        method =request.method
+        
+        print(method,role)
+        if(method == "GET"):
+            return True
+        
+        if(method in ["POST"] and role in ["admin"]):
+            return True
+        
+        return False
+
+class ObjectCategoryPermissions(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        return request.user.role == 'reader' and request.method != "POST" 
+        role = request.user.role
+        method =request.method
+        print(method,role)
+        if(method == "GET"):
+            return True
+        if(method in ["PUT",'PATCH','DELETE'] and role in ['admin']):
+            return True
+        
+        return False
+
+
+
+class POSTCommentPermissions(permissions.BasePermission):
+    def has_permission(self, request, view):
+        role = request.user.role
+        method =request.method
+        
+        print(method,role)
+        if(method == "GET"):
+            return True
+        
+        if(request.user.is_anonymous != False):
+            return True
+        
+        return False
+
+class ObjectCommentPermissions(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        role = request.user.role
+        method =request.method
+        owner= obj.user_id.uid == request.user.uid
+
+        print(method,role)
+        if(method == "GET"):
+            return True
+        if(method in ['DELETE'] and role in ['admin'] or owner):
+            return True
+        
+        return False

@@ -141,6 +141,20 @@ REST_FRAMEWORK = {
 
     ]
 }
+
+# Email Configuration
+EMAIL_BACKEND="django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+EMAIL_USE_TLS = True
+# reset link validity time
+PASSWORD_RESET_TIMEOUT = 15 * 60
+
+# http only cookie max age
+COOKIE_AGE = 3600 * 24 * 14
+
 from datetime import timedelta
 ...
 

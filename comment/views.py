@@ -10,10 +10,10 @@ from common import permissions as customPermissons
 class CommentList(generics.ListCreateAPIView):
     queryset=Comment.objects.all()
     serializer_class=CommentSerializer
-    permission_classes=[]
+    permission_classes=[customPermissons.ObjectPermissions]
     
 class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset=Comment.objects.all()
     serializer_class=CommentSerializer
     lookup_field='uid'
-    permission_classes=[]
+    permission_classes=[customPermissons.ObjectCommentPermissions]

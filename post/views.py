@@ -19,17 +19,16 @@ from common.models import Category
 class PostList(generics.ListCreateAPIView):
     queryset=Post.objects.all()
     serializer_class=PostSerializer
-    permission_classes=[permissions.IsAuthenticatedOrReadOnly,customPermissions.ListPermissions]
+    permission_classes=[customPermissions.POSTPermissions]
+
     
-    
-class PostDetail(generics.RetrieveUpdateDestroyAPIView, mixins.RetrieveModelMixin):
+class PostDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset= Post.objects.all()
     lookup_field='uid'
     serializer_class=PostSerializer
-    permission_classes = [customPermissions.DetailPermissons]
-    
+    permission_classes=[customPermissions.ObjectPermissions]
 
-
+ 
 @api_view(['GET'])
 def get_posts_by_category(request,uid):
     category = Category.objects.get(pk=uid)
