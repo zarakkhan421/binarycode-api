@@ -1,3 +1,6 @@
+from base64 import decode
+from os import access
+from urllib import response
 from django.shortcuts import render
 from .serializers import CategorySerializer
 from rest_framework import generics
@@ -6,7 +9,6 @@ from rest_framework import permissions
 from common import permissions as customPermissions
 from rest_framework.response import Response
 from post.models import Post
-from post.serializers import PostSerializer
 from common.serializers import UserRegistrationSerializer, UserLoginSerializer,UserChangePasswordSerializer, SendPasswordResetEmailSerializer,UserPasswordResetSerializer, CustomTokenVerifySerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from common.renderers import UserRenderer
@@ -15,10 +17,18 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
-from .serializers import CookieTokenRefreshSerializer
+# from .serializers import CookieTokenRefreshSerializer
 from django.conf import settings
-
+import pprint
+import jwt
+import datetime
+import python_jwt
+from rest_framework.decorators import api_view
+from common import serializers
+from rest_framework_simplejwt import views
 from rest_framework_simplejwt.views import TokenVerifyView
+from decouple import config
+
 # Create your views here.
 
 class CategoryList(generics.ListCreateAPIView):
@@ -46,7 +56,7 @@ class UserRegistrationView(APIView):
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
     token = get_tokens_for_user(user)
-    return Response({'token':token, 'msg':'Registration Successful'}, status=status.HTTP_201_CREATED)
+    return Response({'token':token, 'role':user.role,'msg':'Registration Successful'}, status=status.HTTP_201_CREATED)
 
 class UserLoginView(APIView):
   renderer_classes = [UserRenderer]
@@ -61,22 +71,33 @@ class UserLoginView(APIView):
     if user is not None:
       token = get_tokens_for_user(user)
       cookie_max_age = settings.COOKIE_AGE
-      response.set_cookie(key='refresh_token',value=token['refresh'], max_age=cookie_max_age, httponly=True)
-      response.data ={'token':token, 'msg':'Login Success'}
+      response.set_cookie(key='refresh_token',value=token['refresh'], max_age=cookie_max_age,samesite='None', secure=False, httponly=True)
+      response.set_cookie(key='access_token',value=token['access'], max_age=cookie_max_age,samesite='None', secure=False, httponly=True)
+      response.data ={'token':token,'role':user.role,"email":user.email,'access':token['access'], 'msg':'Login Success'}
       response.status_code=status.HTTP_200_OK
       return response
     else:
       return Response({'errors':{'non_field_errors':['Email or Password is not Valid']}}, status=status.HTTP_404_NOT_FOUND)
 
-class CookieTokenRefreshView(TokenRefreshView):
-    def finalize_response(self, request, response, *args, **kwargs):
-        if response.data.get('refresh'):
-            cookie_max_age = settings.COOKIE_AGE
-            response.set_cookie(key='refresh_token', value=response.data['refresh'], max_age=cookie_max_age, httponly=True )
-            del response.data['refresh']
-        return super().finalize_response(request, response, *args, **kwargs)
-    serializer_class = CookieTokenRefreshSerializer
-
+class UserLogoutView(APIView):
+  def post(self,request):
+    response = Response()
+    response.delete_cookie('refresh_token')
+    response.delete_cookie('access_token')
+    response.status_code=status.HTTP_200_OK
+    response.data={
+      'message':'logged out'
+    }
+    return response
+    
+class CustomTokenRefreshView(views.TokenViewBase):
+    """
+    Takes a refresh type JSON web token and returns an access type JSON web
+    token if the refresh token is valid.
+    """
+    serializer_class = serializers.CustomTokenRefreshSerializer
+    
+    
 class UserChangePasswordView(APIView):
   renderer_classes = [UserRenderer]
   permission_classes = [IsAuthenticated]
@@ -102,3 +123,10 @@ class UserPasswordResetView(APIView):
 
 class CustomTokenVerifyView(TokenVerifyView):
      serializer_class=CustomTokenVerifySerializer
+     
+     
+class RefreshAccessToken(APIView):
+  def post(self,request):
+    print('sdsvfereg534')
+    return Response({'data':'gone'})
+

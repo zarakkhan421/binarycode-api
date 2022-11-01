@@ -1,6 +1,6 @@
+from cmath import log
 from rest_framework import serializers
 from .models import Category
-from .models import User
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -16,15 +16,62 @@ if api_settings.BLACKLIST_AFTER_ROTATION:
     from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 from rest_framework.exceptions import ValidationError
 from decouple import config
+from .models import User
+import jwt
+
+from decouple import config
+
+# from common.serializers import PostSerializer
 
 
 # from account.utils import Util
-
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields=['email','role']
+        # fields=['uid','name','posts']
+        # exclude =['views']
 class CategorySerializer(serializers.ModelSerializer):
+    # posts = PostSerializer()
     class Meta:
         model = Category
-        fields=['name','posts']
+        # fields='__all__'
+        fields=['uid','name','posts']
         # exclude =['views']
+
+
+
+class CustomTokenRefreshSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+    access = serializers.CharField(read_only=True)
+    token_class = RefreshToken
+
+    def validate(self, attrs):
+        refresh = self.token_class(attrs["refresh"])
+        print('in ref')
+        decoded = jwt.decode(str(refresh.access_token),config('SECRET_KEY'),'HS256')
+        print(decoded,)
+        user = User.objects.get(pk=decoded['user_id'])
+        print(user.role)
+        data = {"access": str(refresh.access_token),'email':user.email,'role':user.role}
+
+        if api_settings.ROTATE_REFRESH_TOKENS:
+            if api_settings.BLACKLIST_AFTER_ROTATION:
+                try:
+                    # Attempt to blacklist the given refresh token
+                    refresh.blacklist()
+                except AttributeError:
+                    # If blacklist app not installed, `blacklist` method will
+                    # not be present
+                    pass
+
+            refresh.set_jti()
+            refresh.set_exp()
+            refresh.set_iat()
+
+            data["refresh"] = str(refresh)
+
+        return data
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
   # We are writing this becoz we need confirm password field in our Registratin Request
@@ -132,14 +179,9 @@ class UserPasswordResetSerializer(serializers.Serializer):
       PasswordResetTokenGenerator().check_token(user, token)
       raise serializers.ValidationError('Token is not Valid or Expired')
 
-class CookieTokenRefreshSerializer(TokenRefreshSerializer):
-    refresh = None
-    def validate(self, attrs):
-        attrs['refresh'] = self.context['request'].COOKIES.get('refresh_token')
-        if attrs['refresh']:
-            return super().validate(attrs)
-        else:
-            raise InvalidToken('No valid token found in cookie \'refresh_token\'')
+
+          
+  
         
 class CustomTokenVerifySerializer(TokenVerifySerializer):
     token = serializers.CharField()

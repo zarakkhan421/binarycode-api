@@ -9,6 +9,9 @@ djangorestframework = "*"
 python-decouple = "*"
 django-mptt = "*"
 djangorestframework-simplejwt = "*"
+django-cors-headers = "*"
+django-extensions = "*"
+python-jwt = "*"
 
 [dev-packages]
 
