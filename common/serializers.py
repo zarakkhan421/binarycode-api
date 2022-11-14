@@ -8,7 +8,7 @@ from django.core.mail import EmailMessage
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer, TokenVerifySerializer
 from django.conf import settings
-
+from rest_framework_recursive.fields import RecursiveField
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken, SlidingToken, UntypedToken
 
@@ -26,17 +26,40 @@ from decouple import config
 
 # from account.utils import Util
 class UserSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields=['email','role']
+        fields=['first_name','last_name','email','role','name']
         # fields=['uid','name','posts']
         # exclude =['views']
+        
+    def get_name(self,obj):
+      return obj.first_name + " " + obj.last_name
 class CategorySerializer(serializers.ModelSerializer):
     # posts = PostSerializer()
+    children=RecursiveField(many=True)
     class Meta:
         model = Category
         # fields='__all__'
-        fields=['uid','name','posts']
+        fields=['uid','parent','name','posts','children']
+        # exclude =['views']
+class CategoryParentSerializer(serializers.ModelSerializer):
+    # posts = PostSerializer()
+    # children=RecursiveField(many=True)
+    parent = CategorySerializer(read_only=True)
+    class Meta:
+        model = Category
+        # fields='__all__'
+        fields=['uid','parent','name']
+        # exclude =['views']
+class CategoryCreateSerializer(serializers.ModelSerializer):
+    # posts = PostSerializer()
+    # children=RecursiveField(many=True)
+    # parent = CategorySerializer(read_only=True)
+    class Meta:
+        model = Category
+        fields='__all__'
+        # fields=['uid','parent','name']
         # exclude =['views']
 
 
@@ -48,12 +71,12 @@ class CustomTokenRefreshSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         refresh = self.token_class(attrs["refresh"])
-        print('in ref')
         decoded = jwt.decode(str(refresh.access_token),config('SECRET_KEY'),'HS256')
         print(decoded,)
+        print('ref ref',refresh)
         user = User.objects.get(pk=decoded['user_id'])
         print(user.role)
-        data = {"access": str(refresh.access_token),'email':user.email,'role':user.role}
+        data = {"access": str(refresh.access_token),'refresh':str(refresh),'email':user.email,'role':user.role, 'user_id':user.uid}
 
         if api_settings.ROTATE_REFRESH_TOKENS:
             if api_settings.BLACKLIST_AFTER_ROTATION:
@@ -102,6 +125,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
     fields = ['email', 'password']
     
     
+  
 class UserChangePasswordSerializer(serializers.Serializer):
   password = serializers.CharField(max_length=255, style={'input_type':'password'}, write_only=True)
   password2 = serializers.CharField(max_length=255, style={'input_type':'password'}, write_only=True)
@@ -119,6 +143,11 @@ class UserChangePasswordSerializer(serializers.Serializer):
     return attrs
 
 
+class UserSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = User
+    fields=['first_name','last_name']
+    # fields='__all__'
 
 class SendPasswordResetEmailSerializer(serializers.Serializer):
   email = serializers.EmailField(max_length=255)

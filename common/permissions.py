@@ -56,12 +56,15 @@ class POSTCategoryPermissions(permissions.BasePermission):
         return False
 
 class ObjectCategoryPermissions(permissions.BasePermission):
+    print('df')
     def has_object_permission(self, request, view, obj):
         method =request.method
         if(method == "GET"):
             return True
         if(request.user.is_anonymous is False):
+            print('ds')
             role = request.user.role
+            print('iii')
             if(method in ["PUT",'PATCH','DELETE'] and role in ['admin']):
                 return True
         
@@ -76,7 +79,7 @@ class POSTCommentPermissions(permissions.BasePermission):
         if(method == "GET"):
             return True
         
-        if(request.user.is_anonymous):
+        if(request.user.is_anonymous is False):
             return True
         
         return False

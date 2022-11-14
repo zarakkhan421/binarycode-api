@@ -16,24 +16,37 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.views import TokenRefreshView, TokenObtainPairView
 # from .serializers import CookieTokenRefreshSerializer
 from django.conf import settings
-import pprint
-import jwt
-import datetime
-import python_jwt
 from rest_framework.decorators import api_view
 from common import serializers
 from rest_framework_simplejwt import views
 from rest_framework_simplejwt.views import TokenVerifyView
 from decouple import config
+from rest_framework.decorators import api_view
+from django.http import Http404
+from common.models import User
+
 
 # Create your views here.
 
 class CategoryList(generics.ListCreateAPIView):
-    queryset=Category.objects.all()
+    queryset=Category.objects.filter(parent__isnull=True)
     serializer_class=CategorySerializer
+    permission_classes=[customPermissions.POSTCategoryPermissions]
+    
+    def get_serializer_class(self):
+        print(self.request.method)
+        if(self.request.method) == 'POST':
+            print('we here')
+            return serializers.CategoryCreateSerializer
+        else:
+            print('no here')
+            return serializers.CategorySerializer
+                     
+class CategoryListAll(generics.ListCreateAPIView):
+    queryset=Category.objects.all()
+    serializer_class=serializers.CategoryParentSerializer
     permission_classes=[customPermissions.POSTCategoryPermissions]
     
 class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -41,6 +54,8 @@ class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     lookup_field='uid'
     serializer_class=CategorySerializer
     permission_classes=[customPermissions.ObjectCategoryPermissions]
+
+
 
 def get_tokens_for_user(user):
   refresh = RefreshToken.for_user(user)
@@ -56,7 +71,7 @@ class UserRegistrationView(APIView):
     serializer.is_valid(raise_exception=True)
     user = serializer.save()
     token = get_tokens_for_user(user)
-    return Response({'token':token, 'role':user.role,'msg':'Registration Successful'}, status=status.HTTP_201_CREATED)
+    return Response({'token':token, 'role':user.role,'email':user.email,'msg':'registration success', 'user_id':user.uid}, status=status.HTTP_201_CREATED)
 
 class UserLoginView(APIView):
   renderer_classes = [UserRenderer]
@@ -73,7 +88,8 @@ class UserLoginView(APIView):
       cookie_max_age = settings.COOKIE_AGE
       response.set_cookie(key='refresh_token',value=token['refresh'], max_age=cookie_max_age,samesite='None', secure=False, httponly=True)
       response.set_cookie(key='access_token',value=token['access'], max_age=cookie_max_age,samesite='None', secure=False, httponly=True)
-      response.data ={'token':token,'role':user.role,"email":user.email,'access':token['access'], 'msg':'Login Success'}
+      user_id = str(user.uid)
+      response.data ={'token':token,'role':user.role,"email":user.email,'user_id':user_id, 'msg':'Login Success'}
       response.status_code=status.HTTP_200_OK
       return response
     else:
@@ -90,13 +106,6 @@ class UserLogoutView(APIView):
     }
     return response
     
-class CustomTokenRefreshView(views.TokenViewBase):
-    """
-    Takes a refresh type JSON web token and returns an access type JSON web
-    token if the refresh token is valid.
-    """
-    serializer_class = serializers.CustomTokenRefreshSerializer
-    
     
 class UserChangePasswordView(APIView):
   renderer_classes = [UserRenderer]
@@ -105,7 +114,44 @@ class UserChangePasswordView(APIView):
     serializer = UserChangePasswordSerializer(data=request.data, context={'user':request.user})
     serializer.is_valid(raise_exception=True)
     return Response({'msg':'Password Changed Successfully'}, status=status.HTTP_200_OK)
+  
+  
+class EditUserView(APIView):
+    # queryset= Category.objects.all()
+    # lookup_field='uid'
+    # renderer_classes = [UserRenderer]
+    # permission_classes = [IsAuthenticated]
+    # serializer_class = serializers.UserSerializer
+     def get_object(self, pk):
+        try:
+            return User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            raise Http404
+          
+     def patch(self,request):
+        user = self.get_object(request.user.uid)
+        serializer = serializers.UserSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class UserView(APIView):
+    # queryset= Category.objects.all()
+    # lookup_field='uid'
+    # renderer_classes = [UserRenderer]
+    # permission_classes = [IsAuthenticated]
+    # serializer_class = serializers.UserSerializer
+     def get_object(self, pk):
+        try:
+            return User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            raise Http404
+          
+     def get(self, request, uid, format=None):
+        user = self.get_object(uid)
+        serializer = serializers.UserSerializer(user)
+        return Response(serializer.data)
 
 class SendPasswordResetEmailView(APIView):
   renderer_classes = [UserRenderer]
@@ -127,6 +173,13 @@ class CustomTokenVerifyView(TokenVerifyView):
      
 class RefreshAccessToken(APIView):
   def post(self,request):
+    print(request.COOKIES)
     print('sdsvfereg534')
     return Response({'data':'gone'})
 
+class CustomTokenRefreshView(views.TokenViewBase):
+    """
+    Takes a refresh type JSON web token and returns an access type JSON web
+    token if the refresh token is valid.
+    """
+    serializer_class = serializers.CustomTokenRefreshSerializer

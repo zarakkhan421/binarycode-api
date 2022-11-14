@@ -12,6 +12,7 @@ djangorestframework-simplejwt = "*"
 django-cors-headers = "*"
 django-extensions = "*"
 python-jwt = "*"
+djangorestframework-recursive = "*"
 
 [dev-packages]
 

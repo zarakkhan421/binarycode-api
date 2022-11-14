@@ -16,6 +16,8 @@ from rest_framework.response import Response
 from common.models import Category
 import pprint
 from decouple import config
+from rest_framework import mixins
+
 # Create your views here.
 
 class PostList(generics.ListAPIView):
@@ -25,15 +27,31 @@ class PostList(generics.ListAPIView):
     
 class PostCreate(generics.CreateAPIView):
     queryset=Post.objects.all()
-    serializer_class=serializers.PostCreateSerializer
+    serializer_class=serializers.PostSerializer
     permission_classes=[customPermissions.POSTPermissions]
     
-
 class PostDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset= Post.objects.all()
     lookup_field='uid'
-    serializer_class=serializers.PostSerializer
+    # serializer_class=serializers.PostDetailSerializer
     permission_classes=[customPermissions.ObjectPermissions]
+    print('this called')
+    def get_serializer_class(self):
+        print(self.request.method)
+        if(self.request.method in ['PATCH','PUT']):
+            print('we here')
+            return serializers.PostCreateSerializer
+        else:
+            print('no here')
+            return serializers.PostDetailSerializer
+
+
+# class PostUpdate(generics.UpdateAPIView):
+#     queryset= Post.objects.all()
+#     lookup_field='uid'
+#     serializer_class=serializers.PostCreateSerializer
+#     permission_classes=[customPermissions.ObjectPermissions]
+    
 
  
 @api_view(['GET'])

@@ -8,6 +8,9 @@ urlpatterns = [
     path('change/password/',views.UserChangePasswordView.as_view()),
     path('reset/email/',views.SendPasswordResetEmailView.as_view()),
     path('reset/password/<uid>/<token>/',views.UserPasswordResetView.as_view()),
+    path('user/edit/',views.EditUserView.as_view()),
+    path('user/<str:uid>/',views.UserView.as_view()),
+    path('all/',views.CategoryListAll.as_view()),
     path('',views.CategoryList.as_view()),
     path('<str:uid>/',views.CategoryDetail.as_view()),
 ]

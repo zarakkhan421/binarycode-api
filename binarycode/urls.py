@@ -29,9 +29,11 @@ urlpatterns = [
     path('posts/',include('post.urls')),
     path('categories/',include('common.urls')),
     path('comments/',include('comment.urls')),
+    
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', views.CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/verify/', CustomTokenVerifyView.as_view(), name='token_verify'),
+    path('api/token/renew/',views.RefreshAccessToken.as_view()),
     path('api/auth/', include('common.urls'))
 ]
 urlpatterns = format_suffix_patterns(urlpatterns)
