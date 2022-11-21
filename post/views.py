@@ -16,14 +16,15 @@ from rest_framework.response import Response
 from common.models import Category
 import pprint
 from decouple import config
-from rest_framework import mixins
+from rest_framework import mixins,status
+from common import paginations
 
 # Create your views here.
 
 class PostList(generics.ListAPIView):
     queryset=Post.objects.all()
     serializer_class=serializers.PostListSerializer
-    permission_classes=[customPermissions.POSTPermissions]
+    pagination_class = paginations.Pagination
     
 class PostCreate(generics.CreateAPIView):
     queryset=Post.objects.all()
@@ -53,15 +54,23 @@ class PostDetail(generics.RetrieveUpdateDestroyAPIView):
 #     permission_classes=[customPermissions.ObjectPermissions]
     
 
+
+class GetPostsByCategory(APIView):
+    def get(self, request,uid, *args, **kwargs):
+        category = Category.objects.get(pk=uid)
+        serializer = serializers.PostListSerializer(category.posts.all(),many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
  
-@api_view(['GET'])
-def get_posts_by_category(request,uid):
-    category = Category.objects.get(pk=uid)
-    print(category.posts.all())
-    serializer = serializers.PostListSerializer(data=category.posts.all(),many=True)
-    serializer.is_valid()
-    print(serializer.data)
-    return Response(serializer.data)
+# @api_view(['GET'])
+# def get_posts_by_category(request,uid):
+    
+#     category = Category.objects.get(pk=uid)
+#     print(category.posts.all())
+#     serializer = serializers.PostListSerializer(data=category.posts.all(),many=True)
+#     serializer.is_valid()
+#     print(serializer.data)
+#     return Response(serializer.data)
 
 @api_view(['GET'])
 def get_my_post(request):

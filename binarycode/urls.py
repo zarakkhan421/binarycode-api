@@ -34,6 +34,8 @@ urlpatterns = [
     path('api/token/refresh/', views.CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('api/token/verify/', CustomTokenVerifyView.as_view(), name='token_verify'),
     path('api/token/renew/',views.RefreshAccessToken.as_view()),
-    path('api/auth/', include('common.urls'))
+    path('api/auth/', include('common.urls')),
+    
+    path('search/<str:query>/',views.search)
 ]
 urlpatterns = format_suffix_patterns(urlpatterns)

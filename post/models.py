@@ -16,6 +16,7 @@ class Post(BaseModel):
     status = models.CharField(max_length=15,choices=STATUSES,default=STATUSES[1][0])
     views = models.PositiveIntegerField(default=0)
     excerpt= models.TextField(max_length=200,null=True)
+    # related name will help get posts related to a category 'join'
     category_id = models.ManyToManyField(Category,verbose_name = 'Categories',blank=True,related_name='posts')
     user_id=models.ForeignKey(
         settings.AUTH_USER_MODEL,

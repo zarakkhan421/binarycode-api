@@ -26,9 +26,16 @@ from decouple import config
 from rest_framework.decorators import api_view
 from django.http import Http404
 from common.models import User
-
+from django.db.models import Q
+from post.serializers import PostListSerializer
 
 # Create your views here.
+@api_view(['GET'])
+def search(requset,query):
+  posts = Post.objects.filter(Q(title__icontains =query)| Q(content__icontains =query))
+  serializer = PostListSerializer(posts,many=True)
+  print(serializer.data)
+  return Response(serializer.data,status=status.HTTP_200_OK)
 
 class CategoryList(generics.ListCreateAPIView):
     queryset=Category.objects.filter(parent__isnull=True)

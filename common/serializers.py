@@ -40,8 +40,8 @@ class CategorySerializer(serializers.ModelSerializer):
     children=RecursiveField(many=True)
     class Meta:
         model = Category
-        # fields='__all__'
-        fields=['uid','parent','name','posts','children']
+        fields='__all__'
+        # fields=['uid','parent','name','posts','children']
         # exclude =['views']
 class CategoryParentSerializer(serializers.ModelSerializer):
     # posts = PostSerializer()
@@ -143,11 +143,12 @@ class UserChangePasswordSerializer(serializers.Serializer):
     return attrs
 
 
-class UserSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = User
-    fields=['first_name','last_name']
-    # fields='__all__'
+# class UserEditSerializer(serializers.ModelSerializer):
+#   class Meta:
+#     model = User
+#     fields=['first_name','last_name']
+#     # fields='__all__'
+
 
 class SendPasswordResetEmailSerializer(serializers.Serializer):
   email = serializers.EmailField(max_length=255)

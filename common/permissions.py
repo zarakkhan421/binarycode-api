@@ -72,10 +72,10 @@ class ObjectCategoryPermissions(permissions.BasePermission):
 
 
 
-class POSTCommentPermissions(permissions.BasePermission):
+class CommentPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
         method =request.method
-        
+        print('uuuu')
         if(method == "GET"):
             return True
         
@@ -83,17 +83,18 @@ class POSTCommentPermissions(permissions.BasePermission):
             return True
         
         return False
-
-class ObjectCommentPermissions(permissions.BasePermission):
+    
     def has_object_permission(self, request, view, obj):
         method =request.method
-
+        print('dsfd')
         if(method == "GET"):
             return True
+        
         if(request.user.is_anonymous is False):
             owner= obj.user_id.uid == request.user.uid
             role = request.user.role
             if(method in ['DELETE'] and role in ['admin'] or owner):
                 return True
-        
+            
         return False
+    
