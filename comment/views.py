@@ -10,13 +10,15 @@ from rest_framework import status
 from post.models import Post
 from django.db.models import F
 from comment import serializers
+from common import paginations
 
 # Create your views here.
 
-class CommentList(generics.ListCreateAPIView):
+class CommentPost(generics.CreateAPIView):
     queryset=Comment.objects.all()
     serializer_class=CommentSerializer
     permission_classes=[customPermissons.CommentPermissions]
+    
     def post(self, request, *args, **kwargs):
         serializer = serializers.CommentSerializer(data=request.data)
         if serializer.is_valid():
@@ -25,11 +27,18 @@ class CommentList(generics.ListCreateAPIView):
             post = Post.objects.filter(uid = serializer.data['post_id']).update(comment_count=F('comment_count')+1)
             return Response(serializer.data,status=status.HTTP_201_CREATED)
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-    def get(self, request, *args, **kwargs):
-        comments = Comment.objects.all()
-        serializer = serializers.CommentNestedPostSerializer(comments,many=True)
-        print('swer5')
-        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+class CommentList(generics.ListAPIView):
+    queryset=Comment.objects.all()
+    pagination_class = paginations.Pagination
+    serializer_class= CommentSerializer
+    permission_classes=[customPermissons.CommentPermissions]
+    
+@api_view(['GET'])
+def comment(request):
+    print('s')
+    return Response('gt')
+
     
 class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset=Comment.objects.all()

@@ -28,10 +28,10 @@ from django.http import Http404
 from common.models import User
 from django.db.models import Q
 from post.serializers import PostListSerializer
-
+from . import paginations
 # Create your views here.
 @api_view(['GET'])
-def search(requset,query):
+def search(request,query):
   posts = Post.objects.filter(Q(title__icontains =query)| Q(content__icontains =query))
   serializer = PostListSerializer(posts,many=True)
   print(serializer.data)
@@ -41,7 +41,7 @@ class CategoryList(generics.ListCreateAPIView):
     queryset=Category.objects.filter(parent__isnull=True)
     serializer_class=CategorySerializer
     permission_classes=[customPermissions.POSTCategoryPermissions]
-    
+
     def get_serializer_class(self):
         print(self.request.method)
         if(self.request.method) == 'POST':
@@ -55,6 +55,7 @@ class CategoryListAll(generics.ListCreateAPIView):
     queryset=Category.objects.all()
     serializer_class=serializers.CategoryParentSerializer
     permission_classes=[customPermissions.POSTCategoryPermissions]
+    pagination_class = paginations.Pagination
     
 class CategoryDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset= Category.objects.all()

@@ -75,8 +75,9 @@ class GetPostsByCategory(APIView):
 @api_view(['GET'])
 def get_my_post(request):
     print(request.user)
-    posts = Post.objects.all().filter(user_id=request.user.uid)
-    serializer=serializers.PostListSerializer(data=posts,many=True)
-    serializer.is_valid()
+    # posts = Post.objects.all().filter(user_id=request.user.uid)
+    # serializer=serializers.PostListSerializer(data=posts,many=True)
+    # serializer.is_valid()
     # check
+    return Response('sd')
     return Response(serializer.data)
